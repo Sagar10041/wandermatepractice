@@ -3,20 +3,21 @@ import React, { useEffect, useState } from 'react';
 import Card from './Card';
 
 const HotelList = () => {
-  const [hotels, setHotels] = useState([]);
+  const [hotels, setHotels] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchHotels = async () => {
       try {
-        const response = await fetch('http://localhost:3000/hotels');
+        const response = await fetch('https://8e67-202-63-244-120.ngrok-free.app/api/hotels');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const data = await response.json();
         console.log('This is response',response);
-        console.log('this is json',data)
+        const data = await response.text();
+       
+        console.log('this is parsed data',data)
 
         setHotels(data);
         setLoading(false);
@@ -39,7 +40,9 @@ const HotelList = () => {
 
   return (
     <>
-    <Card props ={hotels}/>
+   {hotels
+   }
+    {/* <Card props ={hotels}/> */}
     </>
   );
 };

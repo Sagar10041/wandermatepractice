@@ -7,6 +7,8 @@ import HotelList from './Hotels'
 import CounterUse from './Demo'
 import Counter from './Counter'
 import Hotel from './Hotel'
+import DashboardHome from './Dashboard'
+
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
       <Route path='/counteruse' element ={<CounterUse/>}/>
       <Route path='/counter' element ={<Counter/>}/>
       <Route path='/hotels/:id' element ={<Hotel/>} />
+      <Route path="/admin/*" element={<DashboardHome />} />
+           
     </Routes>
     </BrowserRouter>
     </>
