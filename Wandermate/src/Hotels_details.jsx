@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 
 const Hotels = () => {
     const [hotels, setHotels] = useState([]);
     const [showForm, setShowForm] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
     const [newHotel, setNewHotel] = useState({
         name: '', 
         price: '', 
@@ -24,7 +27,6 @@ const Hotels = () => {
     //     }
     // };
 
-    // Function to load hotels from local storage
     const loadHotelsFromLocalStorage = () => {
         const storedHotels = localStorage.getItem('hotels');
         if (storedHotels) {
@@ -32,7 +34,6 @@ const Hotels = () => {
         }
     };
 
-    // Function to save hotels to local storage
     const saveHotelsToLocalStorage = (hotels) => {
         localStorage.setItem('hotels', JSON.stringify(hotels));
     };
@@ -44,15 +45,31 @@ const Hotels = () => {
 
     const handleAddHotel = () => {
         setShowForm(true);
+        setEditMode(false);
+        setNewHotel({
+            name: '', 
+            price: '', 
+            img: '', 
+            rating: '', 
+            freeCancellation: false, 
+            reserveNow: false, 
+            desc: ''
+        });
     };
-
-    const handleCancle = () => {
+ 
+    const handleCancel = () => {
         setShowForm(false);
-
     };
 
     const handleSaveHotel = () => {
-        const updatedHotels = [...hotels, newHotel];
+        let updatedHotels;
+        if (editMode) {
+            updatedHotels = hotels.map((hotel, index) => 
+                index === currentHotelIndex ? newHotel : hotel
+            );
+        } else {
+            updatedHotels = [...hotels, newHotel];
+        }
         setHotels(updatedHotels);
         saveHotelsToLocalStorage(updatedHotels);
         setShowForm(false);
@@ -75,6 +92,19 @@ const Hotels = () => {
         }));
     };
 
+    const handleEditHotel = (index) => {
+        setCurrentHotelIndex(index);
+        setNewHotel(hotels[index]);
+        setShowForm(true);
+        setEditMode(true);
+    };
+
+    const handleDeleteHotel = (index) => {
+        const updatedHotels = hotels.filter((_, i) => i !== index);
+        setHotels(updatedHotels);
+        saveHotelsToLocalStorage(updatedHotels);
+    };
+
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4">Hotels</h1>
@@ -94,6 +124,7 @@ const Hotels = () => {
                         <th className="py-2 px-4 border">Free Cancellation</th>
                         <th className="py-2 px-4 border">Reserve Now</th>
                         <th className="py-2 px-4 border">Description</th>
+                        <th className="py-2 px-4 border">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,29 +137,29 @@ const Hotels = () => {
                             <td className="py-2 px-4 border">{hotel.freeCancellation ? 'Yes' : 'No'}</td>
                             <td className="py-2 px-4 border">{hotel.reserveNow ? 'Yes' : 'No'}</td>
                             <td className="py-2 px-4 border">{hotel.desc}</td>
-                            <td>
-                        <button
-                            type="button"
-                            className="bg-blue-600 text-white px-4 py-2 rounded ml-7"
-                    
-                        >
-                            Edit
-                        </button></td>
-
-                        <td>
-                        <button
-                            type="button"
-                            className="bg-red-500 text-white px-4 py-2 rounded ml-7"
-                        >
-                            Delete
-                        </button></td>
+                            <td className="py-2 px-4 border">
+                                <button
+                                    type="button"
+                                    className="bg-blue-600 text-white px-4 py-2 rounded mr-2"
+                                    onClick={() => handleEditHotel(index)}
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    className="bg-red-500 text-white px-4 py-2 rounded"
+                                    onClick={() => handleDeleteHotel(index)}
+                                >
+                                    Delete
+                                </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
             {showForm && (
                 <div className="mt-4">
-                    <h2 className="text-xl font-bold mb-2">Add New Hotel</h2>
+                    <h2 className="text-xl font-bold mb-2">{editMode ? 'Edit Hotel' : 'Add New Hotel'}</h2>
                     <form className="space-y-2">
                         <div>
                             <label className="block">Name</label>
@@ -204,13 +235,12 @@ const Hotels = () => {
                             className="bg-green-500 text-white px-4 py-2 rounded"
                             onClick={handleSaveHotel}
                         >
-                            Save Hotel
+                            {editMode ? 'Update Hotel' : 'Save Hotel'}
                         </button>
-
                         <button
                             type="button"
-                            className="bg-green-500 text-white px-4 py-2 rounded ml-7"
-                            onClick={handleCancle}
+                            className="bg-red-500 text-white px-4 py-2 rounded ml-2"
+                            onClick={handleCancel}
                         >
                             Cancel
                         </button>
