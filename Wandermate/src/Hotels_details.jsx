@@ -100,10 +100,12 @@ const Hotels = () => {
     };
 
     const handleDeleteHotel = (index) => {
-        const updatedHotels = hotels.filter((_, i) => i !== index);
+        const updatedHotels = [...hotels]; 
+        updatedHotels.splice(index,1); 
         setHotels(updatedHotels);
         saveHotelsToLocalStorage(updatedHotels);
     };
+    
 
     return (
         <div className="container mx-auto p-4">
