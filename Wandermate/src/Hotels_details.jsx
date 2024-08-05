@@ -1,156 +1,153 @@
-
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Hotels = () => {
     const [hotels, setHotels] = useState([]);
     const [showForm, setShowForm] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
-    const [newHotel, setNewHotel] = useState({
-        name: '', 
-        price: '', 
-        img: '', 
-        rating: '', 
-        freeCancellation: false, 
-        reserveNow: false, 
-        desc: ''
+    const [formData, setFormData] = useState({
+        name: '',
+        price: '',
+        image: [''],
+        description: '',
+        rating: '',
+        freeCancellation: false,
+        reserveNow: false
     });
 
-    // Function to fetch data from API
-    // const fetchHotels = async () => {
-    //     try {
-    //         const response = await fetch('http://localhost:3000/hotels');
-    //         const data = await response.json();
-    //         setHotels(data);
-    //     } catch (error) {
-    //         console.error('Error fetching hotels:', error);
-    //     }
-    // };
-
-    const loadHotelsFromLocalStorage = () => {
-        const storedHotels = localStorage.getItem('hotels');
-        if (storedHotels) {
-            setHotels(JSON.parse(storedHotels));
+    const fetchHotels = async () => {
+        try {
+            const response = await axios.get("http://localhost:5236/api/hotels");
+            setHotels(response.data);
+        } catch (error) {
+            console.error("Error fetching hotels:", error);
         }
-    };
-
-    const saveHotelsToLocalStorage = (hotels) => {
-        localStorage.setItem('hotels', JSON.stringify(hotels));
     };
 
     useEffect(() => {
-        // fetchHotels();
-        loadHotelsFromLocalStorage();
+        fetchHotels();
     }, []);
 
-    const handleAddHotel = () => {
-        setShowForm(true);
-        setEditMode(false);
-        setNewHotel({
-            name: '', 
-            price: '', 
-            img: '', 
-            rating: '', 
-            freeCancellation: false, 
-            reserveNow: false, 
-            desc: ''
-        });
-    };
- 
-    const handleCancel = () => {
-        setShowForm(false);
-    };
-
-    const handleSaveHotel = () => {
-        let updatedHotels;
-        if (editMode) {
-            updatedHotels = hotels.map((hotel, index) => 
-                index === currentHotelIndex ? newHotel : hotel
-            );
-        } else {
-            updatedHotels = [...hotels, newHotel];
-        }
-        setHotels(updatedHotels);
-        saveHotelsToLocalStorage(updatedHotels);
-        setShowForm(false);
-        setNewHotel({
-            name: '', 
-            price: '', 
-            img: '', 
-            rating: '', 
-            freeCancellation: false, 
-            reserveNow: false, 
-            desc: ''
-        });
-    };
-
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setNewHotel(prevState => ({
-            ...prevState,
+        setFormData(prevData => ({
+            ...prevData,
             [name]: type === 'checkbox' ? checked : value
         }));
     };
 
-    const handleEditHotel = (index) => {
-        setCurrentHotelIndex(index);
-        setNewHotel(hotels[index]);
-        setShowForm(true);
-        setEditMode(true);
+    const handleImageChange = (index, value) => {
+        const newImages = [...formData.image];
+        newImages[index] = value;
+        setFormData(prevData => ({
+            ...prevData,
+            image: newImages
+        }));
     };
 
-    const handleDeleteHotel = (index) => {
-        const updatedHotels = [...hotels]; 
-        updatedHotels.splice(index,1); 
-        setHotels(updatedHotels);
-        saveHotelsToLocalStorage(updatedHotels);
+    const handleSave = async () => {
+        try {
+            if (formData.id) {
+                // Update existing hotel
+                await axios.put(`http://localhost:5236/api/hotels/${formData.id}`, formData);
+            } else {
+                // Add new hotel
+                await axios.post("http://localhost:5236/api/hotels", formData);
+            }
+            resetForm();
+            fetchHotels();
+        } catch (error) {
+            console.error("Error saving hotel:", error.response ? error.response.data : error.message);
+        }
     };
-    
+
+    const handleEdit = (hotel) => {
+        setFormData(hotel);
+        setShowForm(true);
+    };
+
+    const handleAddHotel = () => {
+        resetForm();
+        setShowForm(true);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await axios.delete(`http://localhost:5236/api/hotels/${id}`);
+            fetchHotels();
+        } catch (error) {
+            console.error("Error deleting hotel:", error);
+        }
+    };
+
+    const truncateDescription = (text, length = 45) => {
+        return text.length > length ? `${text.slice(0, length)}...` : text;
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            price: '',
+            image: [''],
+            description: '',
+            rating: '',
+            freeCancellation: false,
+            reserveNow: false
+        });
+        setShowForm(false);
+    };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Hotels</h1>
-            <button 
-                className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
+        <>
+            <button
                 onClick={handleAddHotel}
+                className="bg-green-500 text-white px-4 py-2 rounded mb-4"
             >
-                Add Hotel
+                Add New Hotel
             </button>
-            <table className="min-w-full bg-white border">
-                <thead>
+
+            <table className="min-w-full bg-white border border-gray-200 shadow-md">
+                <thead className="bg-gray-100 border-b">
                     <tr>
-                        <th className="py-2 px-4 border">Name</th>
-                        <th className="py-2 px-4 border">Price</th>
-                        <th className="py-2 px-4 border">Image</th>
-                        <th className="py-2 px-4 border">Rating</th>
-                        <th className="py-2 px-4 border">Free Cancellation</th>
-                        <th className="py-2 px-4 border">Reserve Now</th>
-                        <th className="py-2 px-4 border">Description</th>
-                        <th className="py-2 px-4 border">Actions</th>
+                        <th className="py-3 px-6 text-left">Name</th>
+                        <th className="py-3 px-6 text-left">Price</th>
+                        <th className="py-3 px-6 text-left">Images</th>
+                        <th className="py-3 px-6 text-left">Description</th>
+                        <th className="py-3 px-6 text-left">Rating</th>
+                        <th className="py-3 px-6 text-left">Free Cancellation</th>
+                        <th className="py-3 px-6 text-left">Reserve Now</th>
+                        <th className="py-3 px-6 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {hotels.map((hotel, index) => (
-                        <tr key={index}>
-                            <td className="py-2 px-4 border">{hotel.name}</td>
-                            <td className="py-2 px-4 border">{hotel.price}</td>
-                            <td className="py-2 px-4 border"><img src={hotel.img} alt={hotel.name} className="w-16 h-16 object-cover" /></td>
-                            <td className="py-2 px-4 border">{hotel.rating}</td>
-                            <td className="py-2 px-4 border">{hotel.freeCancellation ? 'Yes' : 'No'}</td>
-                            <td className="py-2 px-4 border">{hotel.reserveNow ? 'Yes' : 'No'}</td>
-                            <td className="py-2 px-4 border">{hotel.desc}</td>
-                            <td className="py-2 px-4 border">
+                    {hotels.map((hotel) => (
+                        <tr key={hotel.id} className="border-b hover:bg-gray-50">
+                            <td className="py-2 px-4">{hotel.name}</td>
+                            <td className="py-2 px-4">{hotel.price}</td>
+                            <td className="py-2 px-4">
+                                {hotel.image.filter(img => img).map((img, index) => (
+                                    <div key={index} className="mb-1">{img}</div>
+                                ))}
+                            </td>
+                            <td className="py-2 px-4">
+                                {truncateDescription(hotel.description)}
+                            </td>
+                            <td className="py-2 px-4">{hotel.rating}</td>
+                            <td className="py-2 px-4">
+                                {hotel.freeCancellation ? "Yes" : "No"}
+                            </td>
+                            <td className="py-2 px-4">
+                                {hotel.reserveNow ? "Yes" : "No"}
+                            </td>
+                            <td className="py-2 px-4">
                                 <button
-                                    type="button"
-                                    className="bg-blue-600 text-white px-4 py-2 rounded mr-2"
-                                    onClick={() => handleEditHotel(index)}
+                                    onClick={() => handleEdit(hotel)}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
                                 >
                                     Edit
                                 </button>
                                 <button
-                                    type="button"
+                                    onClick={() => handleDelete(hotel.id)}
                                     className="bg-red-500 text-white px-4 py-2 rounded"
-                                    onClick={() => handleDeleteHotel(index)}
                                 >
                                     Delete
                                 </button>
@@ -159,97 +156,109 @@ const Hotels = () => {
                     ))}
                 </tbody>
             </table>
+
             {showForm && (
-                <div className="mt-4">
-                    <h2 className="text-xl font-bold mb-2">{editMode ? 'Edit Hotel' : 'Add New Hotel'}</h2>
-                    <form className="space-y-2">
-                        <div>
-                            <label className="block">Name</label>
+                <div className="mt-8 p-6 bg-gray-100 border border-gray-300 rounded shadow-md">
+                    <h2 className="text-lg font-semibold mb-4">{formData.id ? 'Edit Hotel' : 'Add Hotel'}</h2>
+                    <form>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Name</label>
                             <input
                                 type="text"
                                 name="name"
-                                value={newHotel.name}
-                                onChange={handleChange}
-                                className="border px-2 py-1 w-full"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                             />
                         </div>
-                        <div>
-                            <label className="block">Price</label>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Price</label>
                             <input
                                 type="number"
                                 name="price"
-                                value={newHotel.price}
-                                onChange={handleChange}
-                                className="border px-2 py-1 w-full"
+                                value={formData.price}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                             />
                         </div>
-                        <div>
-                            <label className="block">Image URL</label>
-                            <input
-                                type="text"
-                                name="img"
-                                value={newHotel.img}
-                                onChange={handleChange}
-                                className="border px-2 py-1 w-full"
+                        {formData.image.map((img, index) => (
+                            <div className="mb-4" key={index}>
+                                <label className="block text-gray-700">Image {index + 1}</label>
+                                <input
+                                    type="text"
+                                    value={img}
+                                    onChange={(e) => handleImageChange(index, e.target.value)}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                                />
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prevData => ({
+                                ...prevData,
+                                image: [...prevData.image, '']
+                            }))}
+                            className="text-blue-500 underline mb-4"
+                        >
+                            Add Another Image
+                        </button>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                             />
                         </div>
-                        <div>
-                            <label className="block">Rating</label>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Rating</label>
                             <input
                                 type="number"
                                 name="rating"
-                                value={newHotel.rating}
-                                onChange={handleChange}
-                                className="border px-2 py-1 w-full"
+                                value={formData.rating}
+                                onChange={handleInputChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                             />
                         </div>
-                        <div>
-                            <label className="block">Free Cancellation</label>
+                        <div className="mb-4 flex items-center">
                             <input
                                 type="checkbox"
                                 name="freeCancellation"
-                                checked={newHotel.freeCancellation}
-                                onChange={handleChange}
-                                className="border px-2 py-1"
+                                checked={formData.freeCancellation}
+                                onChange={handleInputChange}
+                                className="mr-2"
                             />
+                            <label className="text-gray-700">Free Cancellation</label>
                         </div>
-                        <div>
-                            <label className="block">Reserve Now</label>
+                        <div className="mb-4 flex items-center">
                             <input
                                 type="checkbox"
                                 name="reserveNow"
-                                checked={newHotel.reserveNow}
-                                onChange={handleChange}
-                                className="border px-2 py-1"
+                                checked={formData.reserveNow}
+                                onChange={handleInputChange}
+                                className="mr-2"
                             />
-                        </div>
-                        <div>
-                            <label className="block">Description</label>
-                            <textarea
-                                name="desc"
-                                value={newHotel.desc}
-                                onChange={handleChange}
-                                className="border px-2 py-1 w-full"
-                            ></textarea>
+                            <label className="text-gray-700">Reserve Now</label>
                         </div>
                         <button
                             type="button"
-                            className="bg-green-500 text-white px-4 py-2 rounded"
-                            onClick={handleSaveHotel}
+                            onClick={handleSave}
+                            className="bg-blue-500 text-white px-4 py-2 rounded"
                         >
-                            {editMode ? 'Update Hotel' : 'Save Hotel'}
+                            Save
                         </button>
                         <button
                             type="button"
-                            className="bg-red-500 text-white px-4 py-2 rounded ml-2"
-                            onClick={handleCancel}
+                            onClick={resetForm}
+                            className="bg-gray-500 text-white px-4 py-2 rounded ml-2"
                         >
                             Cancel
                         </button>
                     </form>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 
