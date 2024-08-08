@@ -15,13 +15,13 @@ function App() {
     <>
     <BrowserRouter>
     <Routes>
-      {/* <Route path='/'  element={<Landing/>}/>
+      <Route path='/'  element={<Landing/>}/>
       <Route path='/signup' element = {<Signup/>}/>
       <Route path='/signin' element ={<Signin/>}/>
       <Route path='/hotels' element ={<HotelList/>}/>
       <Route path='/counteruse' element ={<CounterUse/>}/>
       <Route path='/counter' element ={<Counter/>}/>
-      <Route path='/hotels/:id' element ={<Hotel/>} /> */}
+      <Route path='/hotels/:id' element ={<Hotel/>} />
       <Route path="/admin/*" element={<DashboardHome />} />
            
     </Routes>
